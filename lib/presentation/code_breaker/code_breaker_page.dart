@@ -43,6 +43,13 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
     viewModelListener();
   }
 
+  @override
+  void dispose() {
+    viewModel.dispose();
+    answerController.dispose();
+    super.dispose();
+  }
+
   void checkAnswer() {
     if (userAnswer.toUpperCase() ==
         viewModel.currentCorrectAnswer.toUpperCase()) {
