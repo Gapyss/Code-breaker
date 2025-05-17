@@ -1,0 +1,2 @@
+/Users/k.stonemac/Documents/gapyspeak/android/app/.cxx/Debug/463p1j10/armeabi-v7a/CMakeFiles/edit_cache.dir
+/Users/k.stonemac/Documents/gapyspeak/android/app/.cxx/Debug/463p1j10/armeabi-v7a/CMakeFiles/rebuild_cache.dir
