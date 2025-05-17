@@ -63,10 +63,10 @@ class CipherGenerator {
     );
   }
 
-  Future<CipherChallenge> generateChallenge() async {
+  Future<CipherChallenge> generateChallenge(String mode) async {
     List<String> words = await _loadWords();
 
-    return generateRandomChallenge(words, 'medium');
+    return generateRandomChallenge(words, mode);
   }
 
   static String getHint(String text, int revealCount) {

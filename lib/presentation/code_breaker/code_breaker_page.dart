@@ -6,7 +6,9 @@ import '../../core/cipher_generator.dart';
 import '../widget/alphabet_buttom_sheet.dart';
 
 class CodeBreakerPage extends StatefulWidget {
-  const CodeBreakerPage({super.key});
+  final String arg;
+
+  const CodeBreakerPage({super.key, required this.arg});
 
   @override
   State<CodeBreakerPage> createState() => _CodeBreakerPageState();
@@ -39,7 +41,7 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
   @override
   void initState() {
     super.initState();
-    viewModel.onPageLoad();
+    viewModel.onPageLoad(widget.arg);
     viewModelListener();
   }
 
@@ -47,7 +49,7 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
     if (userAnswer.toUpperCase() ==
         viewModel.currentCorrectAnswer.toUpperCase()) {
       showCorrectAnswerDialog(context, () {
-        viewModel.onPageLoad();
+        viewModel.onPageLoad(widget.arg);
         Navigator.of(context).pop();
         focusNode.unfocus();
         answerController.clear();
@@ -68,16 +70,6 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
       appBar: AppBar(
         title: const Text("Code Breaker Game"),
         centerTitle: true,
-      ),
-      floatingActionButton: IconButton(
-        onPressed: () {
-          showAlphabetPicker(context, (val) {
-            setState(() {
-              // userAnswer += val;
-            });
-          });
-        },
-        icon: const Icon(Icons.abc),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -130,11 +122,21 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
             stream: viewModel.exampleDecrypted,
             builder: (context, exampleDecryptedSnapshot) {
               final decryptedText = exampleDecryptedSnapshot.data ?? "";
-              return Text(
-                "Understanding the Cipher: $encryptedText → $decryptedText",
-                style: theme.textTheme.bodyLarge
-                    ?.copyWith(fontStyle: FontStyle.italic),
-                textAlign: TextAlign.center,
+              return Column(
+                children: [
+                  Text(
+                    "Understanding the Cipher: ",
+                    style: theme.textTheme.titleMedium
+                        ?.copyWith(fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    "$encryptedText -> $decryptedText",
+                    style: theme.textTheme.titleLarge
+                        ?.copyWith(fontStyle: FontStyle.italic),
+                    textAlign: TextAlign.center,
+                  )
+                ],
               );
             },
           );
@@ -149,7 +151,7 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
       child: TextField(
         controller: answerController,
         focusNode: focusNode,
-        maxLength: 10,
+        maxLength: 20,
         onChanged: (val) => userAnswer = val,
         decoration: InputDecoration(
           labelText: "Enter Your Decoded Word Here",
@@ -312,6 +314,14 @@ class CrackTheCode extends StatelessWidget {
     required this.correctAnswer,
   });
 
+  String buildQuestionMark() {
+    String t = "";
+    for (int i = 0; i < puzzleEncrypted.length; i++) {
+      t = "$t?";
+    }
+    return t;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -331,10 +341,10 @@ class CrackTheCode extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Crack the Code: ", style: theme.textTheme.headlineMedium),
+          Text("Crack the Code: ", style: theme.textTheme.headlineSmall),
           Text(
-            puzzleEncrypted,
-            style: theme.textTheme.headlineMedium
+            "$puzzleEncrypted -> ${buildQuestionMark()}",
+            style: theme.textTheme.headlineSmall
                 ?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12.0),

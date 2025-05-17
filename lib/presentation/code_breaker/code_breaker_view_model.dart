@@ -18,9 +18,13 @@ class CodeBreakerViewModel {
   StreamSubscription? _cipherSubscription;
 
   Stream<String> get puzzleEncrypted => _puzzleEncryptedController.stream;
+
   Stream<String> get exampleDecrypted => _exampleDecryptedController.stream;
+
   Stream<String> get exampleEncrypted => _exampleEncryptedController.stream;
+
   Stream<String> get correctAnswer => _correctAnswerController.stream;
+
   String get currentCorrectAnswer => _currentCorrectAnswer ?? '';
 
   CodeBreakerViewModel({required this.cipherBloc}) {
@@ -35,12 +39,8 @@ class CodeBreakerViewModel {
     });
   }
 
-  void getChallenge() {
-    cipherBloc.add(GetChallenge());
-  }
-
-  void onPageLoad() {
-    getChallenge();
+  void onPageLoad(String mode) {
+    cipherBloc.add(GetChallenge(mode));
   }
 
   void dispose() {
@@ -51,6 +51,7 @@ class CodeBreakerViewModel {
     _cipherSubscription?.cancel(); // Cancel the subscription
   }
 }
+
 class CipherBloc extends Bloc<CodeBreakerEvents, CipherChallenge?> {
   final CipherGenerator _cipherGenerator;
 
@@ -58,7 +59,7 @@ class CipherBloc extends Bloc<CodeBreakerEvents, CipherChallenge?> {
       : _cipherGenerator = cipherGenerator,
         super(null) {
     on<GetChallenge>((event, emit) async {
-      final challenge = await _cipherGenerator.generateChallenge();
+      final challenge = await _cipherGenerator.generateChallenge(event.mode);
       emit(challenge);
     });
   }
@@ -66,7 +67,11 @@ class CipherBloc extends Bloc<CodeBreakerEvents, CipherChallenge?> {
 
 abstract class CodeBreakerEvents {}
 
-final class GetChallenge extends CodeBreakerEvents {}
+final class GetChallenge extends CodeBreakerEvents {
+  final String mode;
+
+  GetChallenge(this.mode);
+}
 
 // In your service_locator.dart:
 final getIt = GetIt.instance;

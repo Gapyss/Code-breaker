@@ -1,4 +1,5 @@
 import 'package:code_breaker_game/presentation/code_breaker/code_breaker_page.dart';
+import 'package:code_breaker_game/presentation/home/home_page.dart';
 import 'package:code_breaker_game/service_locator.dart';
 import 'package:flutter/material.dart';
 
@@ -18,10 +19,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Flutter Demo',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      home: const CodeBreakerPage(),
+      home: const HomePage(),
     );
   }
 }
