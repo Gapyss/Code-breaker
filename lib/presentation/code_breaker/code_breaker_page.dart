@@ -32,9 +32,7 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
     });
 
     viewModel.correctAnswer.listen((correctAnswer) {
-      setState(() {
-        _correctAnswer = correctAnswer;
-      });
+      _correctAnswer = correctAnswer;
     });
   }
 
