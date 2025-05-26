@@ -1,4 +1,4 @@
-package com.gapys.gapyspeak.gapyspeak
+package com.gapys.codebreaker
 
 import io.flutter.embedding.android.FlutterActivity
 
