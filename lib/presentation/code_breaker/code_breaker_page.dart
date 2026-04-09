@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:code_breaker_game/presentation/code_breaker/code_breaker_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
@@ -27,16 +29,7 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
   int _score = 0;
   int _streak = 0;
 
-  int _pointsForDifficulty() {
-    switch (widget.arg) {
-      case 'hard':
-        return 30;
-      case 'medium':
-        return 20;
-      default:
-        return 10;
-    }
-  }
+  StreamSubscription<AnswerResult>? _answerResultSubscription;
 
   void viewModelListener() {
     viewModel.puzzleEncrypted.listen((puzzleEncrypt) {
@@ -47,6 +40,35 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
 
     viewModel.correctAnswer.listen((correctAnswer) {
       _correctAnswer = correctAnswer;
+    });
+
+    viewModel.score.listen((score) {
+      setState(() {
+        _score = score;
+      });
+    });
+
+    viewModel.streak.listen((streak) {
+      setState(() {
+        _streak = streak;
+      });
+    });
+
+    _answerResultSubscription = viewModel.answerResult.listen((result) {
+      if (result.isCorrect) {
+        showCorrectAnswerDialog(context, result, () {
+          viewModel.onPageLoad(widget.arg);
+          Navigator.of(context).pop();
+          focusNode.unfocus();
+          answerController.clear();
+        });
+      } else {
+        showWrongAnswerDialog(context, () {
+          Navigator.of(context).pop();
+          focusNode.unfocus();
+          answerController.clear();
+        });
+      }
     });
   }
 
@@ -59,34 +81,14 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
 
   @override
   void dispose() {
+    _answerResultSubscription?.cancel();
     viewModel.dispose();
     answerController.dispose();
     super.dispose();
   }
 
   void checkAnswer() {
-    if (userAnswer.toUpperCase() ==
-        viewModel.currentCorrectAnswer.toUpperCase()) {
-      setState(() {
-        _streak++;
-        _score += _pointsForDifficulty() * _streak;
-      });
-      showCorrectAnswerDialog(context, _streak, _score, () {
-        viewModel.onPageLoad(widget.arg);
-        Navigator.of(context).pop();
-        focusNode.unfocus();
-        answerController.clear();
-      });
-    } else {
-      setState(() {
-        _streak = 0;
-      });
-      showWrongAnswerDialog(context, () {
-        Navigator.of(context).pop();
-        focusNode.unfocus();
-        answerController.clear();
-      });
-    }
+    viewModel.submitAnswer(userAnswer);
   }
 
   @override
@@ -276,8 +278,10 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
   }
 
   void showCorrectAnswerDialog(
-      BuildContext context, int streak, int totalScore, VoidCallback onNextPuzzle) {
-    final pointsEarned = _pointsForDifficulty() * streak;
+      BuildContext context, AnswerResult result, VoidCallback onNextPuzzle) {
+    final streak = result.streak;
+    final totalScore = result.totalScore;
+    final pointsEarned = result.pointsEarned;
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent closing by tapping outside
