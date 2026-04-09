@@ -24,6 +24,20 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
   int hintLevel = 1; // Start with hint level 1
   final viewModel = GetIt.I.get<CodeBreakerViewModel>();
 
+  int _score = 0;
+  int _streak = 0;
+
+  int _pointsForDifficulty() {
+    switch (widget.arg) {
+      case 'hard':
+        return 30;
+      case 'medium':
+        return 20;
+      default:
+        return 10;
+    }
+  }
+
   void viewModelListener() {
     viewModel.puzzleEncrypted.listen((puzzleEncrypt) {
       setState(() {
@@ -53,13 +67,20 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
   void checkAnswer() {
     if (userAnswer.toUpperCase() ==
         viewModel.currentCorrectAnswer.toUpperCase()) {
-      showCorrectAnswerDialog(context, () {
+      setState(() {
+        _streak++;
+        _score += _pointsForDifficulty() * _streak;
+      });
+      showCorrectAnswerDialog(context, _streak, _score, () {
         viewModel.onPageLoad(widget.arg);
         Navigator.of(context).pop();
         focusNode.unfocus();
         answerController.clear();
       });
     } else {
+      setState(() {
+        _streak = 0;
+      });
       showWrongAnswerDialog(context, () {
         Navigator.of(context).pop();
         focusNode.unfocus();
@@ -82,6 +103,8 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             const SizedBox(height: 20.0),
+            _buildScoreBar(theme),
+            const SizedBox(height: 16.0),
             _buildUnderstandingCipher(theme),
             const SizedBox(height: 24.0),
             CrackTheCode(
@@ -101,6 +124,80 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildScoreBar(ThemeData theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  "SCORE",
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    letterSpacing: 1.5,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  "$_score",
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: _streak >= 3
+                  ? Colors.orange.shade100
+                  : theme.colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  "STREAK",
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    letterSpacing: 1.5,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (_streak >= 3)
+                      const Icon(Icons.local_fire_department,
+                          color: Colors.orange, size: 20),
+                    Text(
+                      "$_streak",
+                      style: theme.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: _streak >= 3
+                            ? Colors.orange.shade700
+                            : theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -179,7 +276,8 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
   }
 
   void showCorrectAnswerDialog(
-      BuildContext context, VoidCallback onNextPuzzle) {
+      BuildContext context, int streak, int totalScore, VoidCallback onNextPuzzle) {
+    final pointsEarned = _pointsForDifficulty() * streak;
     showDialog(
       context: context,
       barrierDismissible: false, // Prevent closing by tapping outside
@@ -192,10 +290,9 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
             children: [
               Icon(Icons.check_circle_outline,
                   size: 60.0, color: Colors.green.shade400),
-              // Larger success icon
               const SizedBox(height: 12.0),
               Text(
-                "Code Cracked!", // More impactful title
+                "Code Cracked!",
                 style: theme.textTheme.headlineSmall
                     ?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
@@ -204,10 +301,67 @@ class _CodeBreakerPageState extends State<CodeBreakerPage> {
           ),
           content: Padding(
             padding: const EdgeInsets.only(top: 16.0),
-            child: Text(
-              "Congratulations! You've successfully decoded the word.",
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Congratulations! You've successfully decoded the word.",
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Column(
+                          children: [
+                            Text("+$pointsEarned pts",
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.bold,
+                                )),
+                            Text("points", style: theme.textTheme.labelSmall),
+                          ],
+                        ),
+                        if (streak >= 2) ...[
+                          const VerticalDivider(thickness: 1, width: 24),
+                          Column(
+                            children: [
+                              Row(
+                                children: [
+                                  if (streak >= 3)
+                                    const Icon(Icons.local_fire_department,
+                                        color: Colors.orange, size: 18),
+                                  Text("x$streak",
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        color: Colors.orange.shade700,
+                                        fontWeight: FontWeight.bold,
+                                      )),
+                                ],
+                              ),
+                              Text("streak", style: theme.textTheme.labelSmall),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "Total: $totalScore pts",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
           ),
           actions: <Widget>[
